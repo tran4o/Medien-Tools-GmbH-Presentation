@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sprites</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#fff;
+				padding:0;
+				margin:0;
+				font-weight: bold;
+				overflow:hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/CanvasRenderer.js"></script>
+		<script src="js/Projector.js"></script>
+		<script src="js/Misc.js"></script>
+		<div id="WebGLCanvas"></div> 
+		<script>
+		var camera, scene, renderer;	
+		var projector = new THREE.Projector();
+		var step=0;
+		var World = function() 
+		{
+			function onWindowResize() {	// TODO attach to body change dimensions
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+				//--------------------------------
+				var object = scene.getObjectByName( "TEST1", true );
+				object.rotation.y += 1 * Math.PI / 180;
+				//object.rotation.x += 0.25 * Math.PI / 180;
+
+				var o1 = scene.getObjectByName( "PAGE1", true );
+				var o2 = scene.getObjectByName( "PAGE2", true );
+				var o3 = scene.getObjectByName( "PAGE3", true );
+				var o4 = scene.getObjectByName( "PAGE4", true );
+				var o5 = scene.getObjectByName( "PAGE5", true );
+				var o6 = scene.getObjectByName( "PAGE6", true );
+
+				var t1 = new THREE.Euler(0.01, 0.01, -0.01, 'XYZ' );
+				var t2 = new THREE.Euler(0.01, 0.003, 0.0, 'XYZ' );
+				var t3 = t1;
+				var t4 = t2;
+				var t5 = t1;
+				var t6 = t2;
+				o1.position.applyEuler(t1);
+				o2.position.applyEuler(t2);
+				o3.position.applyEuler(t3);
+				o4.position.applyEuler(t4);
+				o5.position.applyEuler(t5);
+				o6.position.applyEuler(t6);
+				
+				//-----------------------------------------------
+				var sst=step;
+				function fixShit(o) 
+				{
+					var st=sst;
+					for (var k in o.children)  
+					{
+						var el = o.children[k];
+						if (el instanceof THREE.Mesh) 
+						{
+							var rx = Math.PI*(Math.sin(st)+Math.sin(st*2.3)+0.24*Math.sin(st*0.45))/3.0;
+							var ry = Math.PI*(1.3*Math.sin(st)+Math.cos(st*1.3)+0.7*Math.sin(st*0.1))/3.0;
+							var rz = Math.PI*(Math.sin(st*0.7)+2*Math.sin(st*2.3)+0.64*Math.cos(st*2.9))/3.0;
+							el.rotation.x=rx;
+							el.rotation.y=ry;
+							//el.rotation.z=rz;
+						}
+						st=Math.pow(st,1.03);
+					}
+				}
+				fixShit(o1);
+				fixShit(o2);
+				fixShit(o3);
+				fixShit(o4);
+				fixShit(o5);
+				fixShit(o6);
+				step+=0.01;
+				//-----------------------------------------------
+				//var o2d = projector.projectScene(scene,camera);
+				//drawOutline(o1);
+				//console.log(o2d);
+			}
+			function render() {
+				renderer.clear();
+				renderer.render( scene, camera );
+			}
+			//------------------------------------------------------
+			//renderer = new THREE.CanvasRenderer(); //THREE.WebGLRenderer({ antialias: true });
+			renderer = new THREE.WebGLRenderer({ antialias: true });
+			
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.autoClear = false; // To allow render overlay on top of sprited sphere
+			document.getElementById("WebGLCanvas").appendChild(renderer.domElement); 
+			window.addEventListener( 'resize', onWindowResize, false );
+			renderer.setClearColor(0xffffff, 1); 
+			//------------------------------------------------------
+			var width = window.innerWidth;
+			var height = window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 60, width / height, 1, 2100 );
+			camera.position.x = 0;
+			camera.position.y = 0;
+			camera.position.z = 0;//250;
+			loadJSON("world/navigation.json",function(data) 
+			{
+				var loader = new THREE.ObjectLoader();
+				scene = loader.parse( data );
+				//------------------------------------
+				for (var p=1;p<=6;p++) {
+					var mapC = THREE.ImageUtils.loadTexture( "data/ICON"+p+".svg");
+					scene.getObjectByName( "ICON"+p, true ).material=new THREE.SpriteMaterial( { map: mapC, color: 0xffffff ,fog : true} );
+				}
+				console.log("DONE LOADING JSON");				
+				animate();
+			});
+		}
+		//--------------------------------------------------------------
+		new World();
+		</script>
+	</body>
+</html>
