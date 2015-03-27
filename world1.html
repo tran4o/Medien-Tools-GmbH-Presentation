@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sprites</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#fff;
+				padding:0;
+				margin:0;
+				font-weight: bold;
+				overflow:hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/CanvasRenderer.js"></script>
+		<script src="js/Projector.js"></script>
+		<script src="js/Misc.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/THREEx.KeyboardState.js"></script>
+		<script src="js/THREEx.FullScreen.js"></script>
+
+		<div id="WebGLCanvas"></div> 
+		<script>
+		var dummyc,camera, scene, renderer;
+		var controls;
+		var projector = new THREE.Projector();
+		var step=0;
+		var keyboard = new THREEx.KeyboardState();
+		var clock = new THREE.Clock();
+		var MovingCube;
+		var World = function() 
+		{
+			function onWindowResize() {	// TODO attach to body change dimensions
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+				dummyc.aspect = width / height;
+				dummyc.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			function animate() {
+				requestAnimationFrame( animate );
+				render();
+			}
+			function render() {
+				camera.position.y=560;
+				renderer.clear();
+				renderer.render( scene, camera );
+				var delta = clock.getDelta(); // seconds.
+				var moveDistance = 1200 * delta; // 200 pixels per second
+				var rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
+				// local transformations
+				// move forwards/backwards/left/right
+				
+				if ( keyboard.pressed("W") ) {
+					camera.translateZ( -moveDistance );
+				}
+				if ( keyboard.pressed("S") ) {
+					camera.translateZ( moveDistance );
+				}
+				if ( keyboard.pressed("A") ) {
+					camera.translateX( -moveDistance );
+				}
+				if ( keyboard.pressed("D") ) {
+					camera.translateX( moveDistance );
+				}
+				//console.log(camera.rotation);
+				camera.rotation.set(dummyc.rotation.x,dummyc.rotation.y,dummyc.rotation.z);				
+			}
+			//------------------------------------------------------
+			//renderer = new THREE.CanvasRenderer(); //THREE.WebGLRenderer({ antialias: true });
+			renderer = new THREE.WebGLRenderer({ antialias: true });			
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.autoClear = false; // To allow render overlay on top of sprited sphere
+			document.getElementById("WebGLCanvas").appendChild(renderer.domElement); 
+			window.addEventListener( 'resize', onWindowResize, false );
+			renderer.setClearColor(0xffffff, 1); 
+			//renderer.shadowMapEnabled = true;
+			//------------------------------------------------------
+			
+			var width = window.innerWidth;
+			var height = window.innerHeight;
+			camera = new THREE.PerspectiveCamera( 60, width / height, 1, 8000 );			
+			camera.position.set(8390.488087365271,560,-1728.371679908593);
+			camera.rotation.set(-0.9627316693680374,1.530712438718083,0.9623548349913108);
+			dummyc = new THREE.PerspectiveCamera( 60, width / height, 1, 8000 );						
+			dummyc.position.set(0,0,250);
+			//dummyc.rotation.set(-0.9627316693680374,1.530712438718083,0.9623548349913108);
+			//loadJSON("world/sibenik-cathedral-vray.json",function(data) 
+			loadJSON("world/scene.json",function(data) 
+			{
+				var loader = new THREE.ObjectLoader();
+				scene = loader.parse( data );
+				controls = new THREE.OrbitControls( dummyc, renderer.domElement );
+				//camera.lookAt(scene.position);	
+				
+				var materialArray = [];
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/xpos.png' ) }));
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/xneg.png' ) }));
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/ypos.png' ) }));
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/yneg.png' ) }));
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/zpos.png' ) }));
+				materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/zneg.png' ) }));
+	
+				var MovingCubeMat = new THREE.MeshFaceMaterial(materialArray);
+				var MovingCubeGeom = new THREE.CubeGeometry( 50, 50, 50, 1, 1, 1, materialArray );
+				MovingCube = new THREE.Mesh( MovingCubeGeom, MovingCubeMat );
+				MovingCube.position.set(0,100.1,0);
+				MovingCube.rotation.set(0,-Math.PI/2,0);
+				scene.add( MovingCube );
+				animate();
+								
+			});
+			
+			/*
+			scene = new THREE.Scene();
+			var loader = new THREE.ObjectLoader();
+			loader.load("world/sibenik-cathedral-vray.json",function ( obj ) {
+				scene.add( obj );
+			});
+			animate();*/
+		}
+		//--------------------------------------------------------------
+		new World();
+		</script>
+	</body>
+</html>

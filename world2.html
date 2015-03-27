@@ -1,0 +1,292 @@
+<DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sprites</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background:#fff;
+				padding:0;
+				margin:0;
+				font-weight: bold;
+				overflow:hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/CanvasRenderer.js"></script>
+		<script src="js/Projector.js"></script>
+		<script src="js/Misc.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/THREEx.KeyboardState.js"></script>
+		<script src="js/THREEx.FullScreen.js"></script>
+		<script src='js/BokehShader.js'></script>
+		<script src='js/threex.depthoffield.js'></script>
+		<script src='js/THREEx.GeometryUtils.js'></script>
+		<script src='js/stats.min.js'></script>
+		
+		
+
+		<div id="WebGLCanvas"></div> 
+		<script>
+		var stats = new Stats();
+		stats.setMode(1); // 0: fps, 1: ms
+
+		// align top-left
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.left = '0px';
+		stats.domElement.style.top = '0px';
+
+		document.body.appendChild( stats.domElement );
+
+
+
+		var startTime = (new Date()).getTime();
+		var camera, scene, renderer,spheres,depthOfField;
+		var controls;
+		var projector = new THREE.Projector();
+		var step=0;
+		var keyboard = new THREEx.KeyboardState();
+		var clock = new THREE.Clock();
+		var rings = [];
+		var World = function() 
+		{
+			function onWindowResize() {	// TODO attach to body change dimensions
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+				camera.far=100;
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+			function animate() 
+			{
+				requestAnimationFrame( animate );
+				stats.begin();
+				render();
+				stats.end();
+			}
+			
+			function render() 
+			{
+				var delta = clock.getDelta(); // seconds.
+				var moveDistance = 12.0 * delta; // 200 pixels per second
+				var rotateAngle = Math.PI / 2 * delta;   // pi/2 radians (90 degrees) per second
+				// local transformations
+				// move forwards/backwards/left/right
+				if ( keyboard.pressed("W") ) {
+					var lookAtVector = new THREE.Vector3(0,0, -moveDistance);
+					lookAtVector.applyQuaternion(camera.quaternion);
+					camera.translateX(lookAtVector.x);camera.translateY(lookAtVector.y);camera.translateZ(lookAtVector.z);
+				}
+				if ( keyboard.pressed("S") ) {
+					var lookAtVector = new THREE.Vector3(0,0, moveDistance);
+					lookAtVector.applyQuaternion(camera.quaternion);
+					camera.translateX(lookAtVector.x);camera.translateY(lookAtVector.y);camera.translateZ(lookAtVector.z);
+				}
+				if ( keyboard.pressed("A") ) {
+					var lookAtVector = new THREE.Vector3(-moveDistance,0,0);
+					lookAtVector.applyQuaternion(camera.quaternion);
+					camera.translateX(lookAtVector.x);camera.translateY(lookAtVector.y);camera.translateZ(lookAtVector.z);
+				}
+				if ( keyboard.pressed("D") ) {
+					var lookAtVector = new THREE.Vector3(moveDistance,0,0);
+					lookAtVector.applyQuaternion(camera.quaternion);
+					camera.translateX(lookAtVector.x);camera.translateY(lookAtVector.y);camera.translateZ(lookAtVector.z);
+				}
+				//--------------------------------------------------------------------------------------------------
+				var ctime = ((new Date()).getTime()-startTime)*0.7;
+				
+				var sumx=0.0;
+				var sumy=0.0;
+				var sumz=0.0;
+				for (var i=0;i<spheres.length;i++) 
+				{
+					var s = spheres[i];
+					var bbox = (new THREE.Box3()).setFromObject(s);
+					sumx+=bbox.min.x+bbox.max.x;
+					sumy+=bbox.min.y+bbox.max.y;
+					sumz+=bbox.min.z+bbox.max.z;
+				}				
+				sumx/=spheres.length;
+				sumy/=spheres.length;
+				sumz/=spheres.length;
+				//camera.position.set(30,0,0);
+				camera.up = new THREE.Vector3(0,1,0);
+				
+				var mtime = ctime / 100000.0 * Math.PI*2;
+				var time = (Math.sin(mtime)+0.7*Math.sin(mtime*0.7))*Math.PI*2;
+				camera.position.set( Math.sin(time) * 25 , 8+Math.sin(time*1.3)*4, Math.cos(time) * 21);
+				sumy*=0.3;
+				camera.lookAt(new THREE.Vector3(sumx*0.3,sumy,sumz*0.3));
+				//console.log("OP "+sumx+" "+sumy+" "+sumz);
+				
+
+				for (var i=0;i<rings.length;i++) 
+				{	
+					var st = ctime*0.0006 + i*Math.PI/4.0; 
+					var rx = Math.PI*(Math.sin(st)*0.3+Math.sin(st*2.3)+0.24*Math.sin(st*1.45))/3.0;
+					rings[i].rotation.x=rx;
+					rings[i].rotation.z=i*0.7+ctime*0.0002;
+				}
+				
+				for (var i=0;i<spheres.length;i++) 
+				{
+					time = (Math.cos(mtime)-0.4*Math.sin(mtime*(1+0.2*i/spheres.length)*1.2))*Math.PI*2;	
+					spheres[i].rotation.y=Math.sin(time)*Math.PI*2;
+
+					time = (Math.sin(time*0.7+1.0*i/spheres.length)*0.4+0.3*Math.sin(time*(1+0.4*i/spheres.length)*1.4))*Math.PI*2;	
+					spheres[i].rotation.z=Math.cos(time)*Math.PI*2;
+
+					var angle = ctime/6000.0*Math.PI*2;
+					var angle1 = angle*(1.0+i*0.1);
+					var vector = new THREE.Vector3( Math.sin(i*Math.PI*2/6)*10,11+Math.sin(i*Math.PI*2/5+ctime*i/5.0*0.001)*2+Math.sin(i*2.3*Math.PI*2/6)*1.5,Math.cos(i*Math.PI*2/6)*10 );
+
+					var axis =  new THREE.Vector3( 0, 1, 0 );
+					//axis.applyAxisAngle( new THREE.Vector3( 0, 0, 1 ), angle );
+					
+					//new THREE.Vector3( 0, 1, 0 )
+					vector.applyAxisAngle( axis , angle );
+					dummies[i].position.set(vector.x,vector.y,vector.z);
+				}
+				//----------------------------------------------------------------------
+				renderer.clear();
+				renderer.render( scene, camera );
+				//depthOfField.render(scene, camera);
+			}
+			//------------------------------------------------------
+			//renderer = new THREE.CanvasRenderer(); //THREE.WebGLRenderer({ antialias: true });
+			renderer = new THREE.WebGLRenderer({ antialias: true });			
+			renderer.shadowMapEnabled = true;
+			renderer.shadowMapSoft = true;
+
+			var material_depth = new THREE.MeshDepthMaterial();
+			
+			depthOfField= new THREEx.DepthOfField(renderer);
+			
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.autoClear = false; // To allow render overlay on top of sprited sphere
+			document.getElementById("WebGLCanvas").appendChild(renderer.domElement); 
+			window.addEventListener( 'resize', onWindowResize, false );
+			renderer.setClearColor(0xffffff, 1); 
+			//renderer.shadowMapEnabled = true;
+			//------------------------------------------------------
+			
+			var width = window.innerWidth;
+			var height = window.innerHeight;
+			
+			var initCamera = [0.9976754784584045,-2.288536027350574e-11,-0.06814465671777725,0,0.0009553118143230677,0.9999017119407654,0.013986293226480484,0,0.06813795864582062,-0.014018881134688854,0.997577428817749,0,0.534313440322876,6.035477161407471,24.748538970947266,1];
+			
+			camera = new THREE.PerspectiveCamera( 60, width / height, 1, 100 );			
+			camera.matrix.fromArray(initCamera);
+			camera.matrix.decompose(camera.position, camera.quaternion, camera.scale); 
+			
+			loadJSON("world/app.json",function(data) 
+			{
+				var loader = new THREE.ObjectLoader();
+				scene = loader.parse( data.scene );
+				
+				var reflection = THREE.ImageUtils.loadTextureCube( [ 'data/pos-x.jpg', 'data/neg-x.jpg', 'data/pos-y.jpg', 'data/neg-y.jpg', 'data/pos-z.jpg', 'data/neg-z.jpg' ] );
+				var sp1 = scene.getObjectByName("sphere master");
+				sp1.material.envMap = reflection;
+				sp1.material.operation = THREE.MixOperation;
+				sp1.material.reflectivity = 0.32;
+				sp1.material.needsUpdate = true;
+				sp1.castShadow = true;
+				sp1.needsUpdate = true;
+
+				var lmod = scene.getObjectByName("lab_model");
+				lmod.material.map = THREE.ImageUtils.loadTexture("data/index-interior.jpg");
+				lmod.material.needsUpdate = true;
+				lmod.receiveShadow = true;
+				lmod.needsUpdate = true;
+			
+				var slight = scene.getObjectByName("DirectionalLight 1");	
+				scene.remove(slight);
+				var hlight = scene.getObjectByName("HemisphereLight 3");	
+				//scene.remove(hlight);
+				
+				/*slight.castShadow = true;
+				slight.shadowDarkness = 0.5;
+				slight.shadowCameraVisible = true;
+				slight.needsUpdate = true;*/
+				// white spotlight shining from the side, casting shadow
+
+				var light = new THREE.SpotLight( 0x404040 );
+				light.position.set( 0, 80, 0 );
+				light.castShadow = true;
+				light.shadowMapWidth = 768;
+				light.shadowMapHeight = 768;
+				light.shadowDarkness = 0.15;
+				light.shadowCameraNear = 50;
+				light.shadowCameraFar = 1000;
+				light.shadowCameraFov = 30;
+				//light.shadowCameraVisible = true;
+
+				scene.add( light );
+
+				var podest = scene.getObjectByName("podest").children[0];
+				podest.material.map = THREE.ImageUtils.loadTexture("data/index-podest.jpg");
+				podest.material.needsUpdate = true;
+				podest.receiveShadow = true;
+				podest.needsUpdate = true;				
+				//-..................................................................
+				var mats = ["index-blue.jpg","index-green.jpg","index-yellow.jpg","index-red.jpg","index-purple.jpg",];
+				//-..................................................................
+				var dm1 = new THREE.Object3D();
+				scene.remove(sp1);
+				dm1.add(sp1);
+				
+				sp1.geometry.computeBoundingBox();
+				THREEx.GeometryUtils.center(sp1.geometry);
+
+				var ring = scene.getObjectByName("sphere_ring_group");
+				scene.remove(ring);
+				ring=ring.children[0];
+				THREEx.GeometryUtils.center(ring.geometry);
+				
+				var bbox = (new THREE.Box3()).setFromObject(sp1);
+				console.log(bbox.min);
+				console.log(bbox.max);
+
+				scene.add(dm1)
+				spheres = [sp1];
+				dummies = [dm1];
+				for ( var i = 0; i < 5; i ++ ) 
+				{
+					var mesh = new THREE.Mesh( sp1.geometry, sp1.material.clone() );
+					mesh.material.map = THREE.ImageUtils.loadTexture("data/"+mats[i]);
+					mesh.material.needsUpdate = true;
+					mesh.position.set(0,0,0);
+					mesh.castShadow = true;
+
+					var dummy = new THREE.Object3D();
+					//dummy.position.set( 0,0,0);
+					dummy.add(mesh);
+					scene.add(dummy);
+					spheres[i]=mesh;
+					dummies[i]=dummy;
+
+					var cnt = i == 1 ? 3 : 1;
+					for (var k = 0; k<cnt; k++) 
+					{
+						var rng = new THREE.Mesh( ring.geometry, ring.material );
+						dummies[i].add(rng);
+						rings[rings.length]=rng;
+					}
+					//rng.rotation.x=i*0.2*Math.PI;
+					//rng.rotation.z=i*0.4*Math.PI;
+					
+				}
+				animate();
+			});
+		}
+		//--------------------------------------------------------------
+		new World();
+		</script>
+	</body>
+</html>

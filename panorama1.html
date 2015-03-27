@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - sprites</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
+		<style>
+			body {
+				background:#fff;
+				padding:0;
+				margin:0;
+				font-weight: bold;
+				overflow:hidden;
+				font-family: 'Roboto', sans-serif;
+				font-weight : 100;
+				line-height : 1.2;
+			}
+			
+			hr {
+				border:0;
+				border-top:1px solid white;
+				margin-top:0.3em;
+				margin-bottom:0.3em;
+			}
+		
+			.menu_popup {
+				font-size : 23px;
+				position : absolute;
+				color : white;
+				background-color: rgba(0,0,0,0.4);			
+				padding-top : 12px;				
+				padding-bottom : 12px;				
+				padding-left : 12px;				
+				padding-right : 12px;		
+				top:0;
+				left: 0;
+				width:auto;
+				
+				text-shadow: 0 0 1px #FFFFFF;
+			}		
+			
+			.text_block {
+				max-width : 20em;
+				font-size : 17px;
+			}
+			.text_block h1 {
+				font-size : 13px;
+				margin:0;
+				font-weight : 100;
+			}
+			.button {
+				cursor : pointer;
+			}
+			.button:hover {
+				color : #ff3c00;
+				text-shadow: 0 0 1px #ff3c00;
+			}
+			.back_button {
+				font-size : 60%;
+			}
+		</style>
+		
+	</head>
+
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/CanvasRenderer.js"></script>
+		<script src="js/Projector.js"></script>
+		<script src="js/Misc.js"></script>
+		<script src="js/jquery-1.11.2.min.js"></script>
+		<div id="container"></div>
+		<div id="menu_exit" class="menu_popup" style="display:none">
+			<div class="button">HOTEL</div><hr/>
+			<div class="button">GASTRANOMIE</div><hr/>
+			<div class="button">AUSSTELLUNG</div><hr/>
+			<div class="button">OUTDOOR BEREICH</div><hr/>
+			<div class="button">KONFERENZSAAL</div><br/><br/>
+			<div class="button back_button">ZUM HAUPTMENÜ</div>
+		</div>
+		<div id="menu1" class="menu_popup text_block" style="display:none">TITLE BIG<h1>Subtitle</h1><hr/>text, text, text, text, text, text, text, text, text, text, text, text, text, text, text, text </div>
+		<div id="menu2" class="menu_popup text_block" style="display:none">Example2<h1>Some other text</h1><hr/>
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus</div>
+		<div id="menu3" class="menu_popup text_block" style="display:none">Example3<h1>T333287318723 ahsadjas</h1><hr/>
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo. Quisque sit amet est et sapien ullamcorper pharetra. Vestibulum erat wisi, condimentum sed, commodo vitae, ornare sit amet, wisi. Aenean fermentum, elit eget tincidunt condimentum, eros ipsum rutrum orci, sagittis tempus lacus enim ac dui. Donec non enim in turpis pulvinar facilisis. Ut felis. Praesent dapibus, neque id cursus faucibus, tortor neque egestas augue, eu vulputate magna eros eu erat. Aliquam erat volutpat. Nam dui mi, tincidunt quis, accumsan porttitor, facilisis luctus, metus</div>
+		<script>
+			var geometry,mesh;
+			var camera, scene, renderer;
+			var activePath=null;
+			var isPos=true;
+			var lock=0;
+			
+			var lastTime = (new Date()).getTime();
+			var isUserInteracting = false,
+			onMouseDownMouseX = 0, onMouseDownMouseY = 0,
+			lon = 0, onMouseDownLon = 0,
+			lat = 0, onMouseDownLat = 0,
+			phi = 0, theta = 0;
+
+			init();
+			animate();
+
+			//--------------------------
+			var m1;
+
+			function center(el) 
+			{
+				el.css("position","absolute");
+				el.css("top", Math.max(0, (($(window).height() - $(el).outerHeight()) / 2) + 
+															$(window).scrollTop()) + "px");
+				el.css("left", Math.max(0, (($(window).width() - $(el).outerWidth()) / 2) + 
+															$(window).scrollLeft()) + "px");
+			}
+			function doCenter() {
+				center($("#menu_exit"));
+				center($("#menu1"));
+				center($("#menu2"));
+				center($("#menu3"));
+			}
+			function doHide() {
+				$("#menu_exit").fadeOut(500);
+				$("#menu1").fadeOut(500);
+				$("#menu2").fadeOut(500);
+				$("#menu3").fadeOut(500);
+			}
+
+			$( window ).resize(function() {
+				doCenter();
+			});
+			
+			function init() 
+			{
+				doCenter();
+				var mapC1 = THREE.ImageUtils.loadTexture( "data/marker_info.svg");
+				var matS1 = new THREE.SpriteMaterial( { map: mapC1, color: 0xffffff} );
+				var mapC2 = THREE.ImageUtils.loadTexture( "data/marker_exit.svg");
+				var matS2 = new THREE.SpriteMaterial( { map: mapC2, color: 0xffffff} );
+			
+				var mat1 = new THREE.MeshBasicMaterial( { color: 0x00ffff, wireframe: true } );
+				var g1 = new THREE.Geometry();
+				g1.vertices.push(
+					new THREE.Vector3( -489.2153136273889,  -40.24017296311083, 92.45938124282758 ),
+					new THREE.Vector3( -487.5989420085643, 59.424020388899926, 88.17020591934293 ),
+					new THREE.Vector3(  -487.2776789511223, 59.32155725763845, -90.275998058672 ),
+					new THREE.Vector3(  -488.85008406050207, -43.25738398788296, -92.48566659101509 )
+				);
+				g1.faces.push( new THREE.Face3( 2, 1, 0 ));
+				g1.faces.push( new THREE.Face3( 0, 3, 2 ));
+				g1.computeBoundingSphere();
+				m1 = new THREE.Mesh( g1 , mat1 );
+				m1.doubleSided=true;
+				var s1  = new THREE.Sprite( matS1 );
+				s1.position.set( -499.33826968804584*0.9, 14.62133346605472*0.9, -1.6649542619776838*0.9 );
+				s1.scale.set(60, 60 , 1); 
+
+				var g2 = new THREE.Geometry();
+				g2.vertices.push(
+					new THREE.Vector3( 342.9093223144621,  -126.73823786127537, 339.72852767528275 ),
+					new THREE.Vector3( 36.805142181340045, -169.6263262705598, 468.0221207792883 ),
+					new THREE.Vector3(  60.18424568895149, -4.544016880318134, 495.826028046881 ),
+					new THREE.Vector3( 342.68072106350337, -8.186431063007655, 363.00274246064583 )
+				);
+				g2.faces.push( new THREE.Face3( 0, 1, 2 ));
+				g2.faces.push( new THREE.Face3( 2, 3, 0 ));
+				g2.computeBoundingSphere();
+				m2 = new THREE.Mesh( g2 , mat1 );
+				m2.doubleSided=true;
+				var s2  = new THREE.Sprite( matS1 );
+				//s2.position.set( 33.3381112026394*0.9, -81.13771626751226*0.9, 433.9518888030627*0.9 );
+				s2.position.set( 218.0256872398946*0.9, -65.26788754309987*0.9, 444.1228297474068*0.9 );
+				s2.scale.set(60, 60 , 1); 
+				
+				var g3 = new THREE.Geometry();
+				g3.vertices.push(
+					new THREE.Vector3( -359.100173071523,  -158.1106340094763, -309.025799064564 ),
+					new THREE.Vector3( -381.46637045965286, -7.986279595267633, -321.84936205890637 ),
+					new THREE.Vector3(  -225.1562570674731, -5.041650601796383, -445.44920762839257 ),
+					new THREE.Vector3( -205.06110890226154, -179.65369438832198, -418.0855223462517 )
+				);
+				g3.faces.push( new THREE.Face3( 2, 1, 0 ));
+				g3.faces.push( new THREE.Face3( 0, 3, 2 ));
+				g3.computeBoundingSphere();
+				m3 = new THREE.Mesh( g3 , mat1 );
+				m3.doubleSided=true;
+				var s3  = new THREE.Sprite( matS1 );
+				s3.position.set( -309.6073490140852*0.9, -85.65231566737408*0.9, -381.97232904256*0.9 );
+				s3.scale.set(60, 60 , 1); 
+				
+				var g4 = new THREE.Geometry();
+				g4.vertices.push(
+					new THREE.Vector3( 490.32928958654594,  -50.23435821100033, -77.87480915513342 ),
+					new THREE.Vector3( 492.57438493923985, 30.651341880304315, -74.16617837603592 ),
+					new THREE.Vector3(  492.77449093469335, 28.486345298053607, 73.4457745507739 ),
+					new THREE.Vector3( 490.07244668094177, -54.81916307554272, 76.03235715568364 )
+				);
+				g4.faces.push( new THREE.Face3( 2, 1, 0 ));
+				g4.faces.push( new THREE.Face3( 0, 3, 2 ));
+				g4.computeBoundingSphere();
+				m4 = new THREE.Mesh( g4 , mat1 );
+				m4.doubleSided=true;
+				var s4  = new THREE.Sprite( matS2 );
+				s4.position.set( 499.5006152601457*0.9, -10.03351529171819*0.9, -2.006703047109389*0.9 );
+				s4.scale.set(60, 60 , 1); 
+				//---------------------------------------
+				var container;
+				container = document.getElementById( 'container' );
+				camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
+				camera.target = new THREE.Vector3( 0, 0, 0 );
+				scene = new THREE.Scene();
+				geometry = new THREE.SphereGeometry( 500, 60, 40 );
+				geometry.applyMatrix( new THREE.Matrix4().makeScale( -1, 1, 1 ) );
+				var material = new THREE.MeshBasicMaterial( {
+					map: THREE.ImageUtils.loadTexture( 'data/panorama2.jpg' )
+				} );
+				mesh = new THREE.Mesh( geometry, material );
+				scene.add( mesh );
+				//scene.add(m1);
+				scene.add(s1);
+				//scene.add(m2);
+				scene.add(s2);
+				//scene.add(m3);
+				scene.add(s3);
+				//scene.add(m4);
+				scene.add(s4);
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+
+				container.addEventListener( 'click', onDocumentMouseClick, false );
+				container.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				container.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				container.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				container.addEventListener( 'mousewheel', onDocumentMouseWheel, false );
+				container.addEventListener( 'DOMMouseScroll', onDocumentMouseWheel, false);
+
+				//
+
+				container.addEventListener( 'dragover', function ( event ) {
+
+					event.preventDefault();
+					event.dataTransfer.dropEffect = 'copy';
+
+				}, false );
+
+				container.addEventListener( 'dragenter', function ( event ) {
+
+					document.body.style.opacity = 0.5;
+
+				}, false );
+
+				container.addEventListener( 'dragleave', function ( event ) {
+
+					document.body.style.opacity = 1;
+
+				}, false );
+
+				container.addEventListener( 'drop', function ( event ) {
+
+					event.preventDefault();
+
+					var reader = new FileReader();
+					reader.addEventListener( 'load', function ( event ) {
+
+						material.map.image.src = event.target.result;
+						material.map.needsUpdate = true;
+
+					}, false );
+					reader.readAsDataURL( event.dataTransfer.files[ 0 ] );
+
+					document.body.style.opacity = 1;
+
+				}, false );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			var projector = new THREE.Projector();
+			var timeIn;
+			function onDocumentMouseDown( event ) {
+				timeIn = (new Date()).getTime();
+				event.preventDefault();
+
+				isUserInteracting = true;
+
+				onPointerDownPointerX = event.clientX;
+				onPointerDownPointerY = event.clientY;
+
+				onPointerDownLon = lon;
+				onPointerDownLat = lat;
+			}
+
+			function fix(path) {
+				console.log(path);
+				if (Math.abs(path.endLon-path.startLon) > Math.abs((path.endLon+360-path.startLon)))
+					path.endLon+=360;	
+				return path;
+			}
+			function onDocumentMouseClick( event ) {
+				if (lock) {
+					doHide();
+					lock--;
+				}
+				event.preventDefault();
+				var dur = (new Date()).getTime()-timeIn;
+				if (dur >= 400)
+					return;
+				var vector = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 1, 10000);
+				projector.unprojectVector(vector, camera);
+				var raycaster = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
+				var intersect = raycaster.intersectObject(mesh);
+				if (intersect.length > 0) {
+					console.log(intersect[0].point);
+				}
+				//-------------------------------------
+				if (raycaster.intersectObject(m1).length) {
+					activePath=fix({endLon:179.8%360,endLat:0.6999999999999997%360,dur:500,start:(new Date()).getTime(),startLon:lon,startLat:lat});
+					console.log("M1!");
+					$("#menu1").fadeIn(250);
+					lock++;
+				}
+				if (raycaster.intersectObject(m2).length) {
+					activePath=fix({endLon:421.6%360,endLat:-12.799999999999999%360,dur:500,start:(new Date()).getTime(),startLon:lon,startLat:lat});
+					console.log("M2!");
+					$("#menu2").fadeIn(250);
+					lock++;
+				}
+				if (raycaster.intersectObject(m3).length) {
+					activePath=fix({endLon:230.1%360,endLat:-12.3%360,dur:500,start:(new Date()).getTime(),startLon:lon,startLat:lat});
+					console.log("M3!");
+					$("#menu3").fadeIn(250);
+					lock++;
+				}
+				if (raycaster.intersectObject(m4).length) {
+					//activePath=fix({endLon:230.1%360,endLat:-12.3%360,dur:500,start:(new Date()).getTime(),startLon:lon,startLat:lat});
+					activePath=fix({endLon:0,endLat:0,dur:500,start:(new Date()).getTime(),startLon:lon,startLat:lat});
+					console.log("M4!");
+					$("#menu_exit").fadeIn(250);
+					lock++;
+				}
+			}
+
+			function onDocumentMouseMove( event ) 
+			{
+				if (isUserInteracting && lock) {
+					doHide();
+					lock--;
+				}
+				if ( isUserInteracting === true && !lock) 
+				{
+					isPos = (onPointerDownPointerX >= event.clientX);
+					lon = (( onPointerDownPointerX - event.clientX ) * 0.1 + onPointerDownLon)%360;
+					lat = (( event.clientY - onPointerDownPointerY ) * 0.1 + onPointerDownLat)%360;
+					if (Math.abs(onPointerDownPointerX - event.clientX) >= 15 || Math.abs(onPointerDownPointerY - event.clientY) >= 15) 
+						timeIn=0;
+					if (lon < 0.0)
+						lon=360.0+lon;
+					//console.log("LON="+lon+" LAT="+lat);
+				}
+			}
+
+			function onDocumentMouseUp( event ) {
+
+				isUserInteracting = false;
+
+			}
+
+			function onDocumentMouseWheel( event ) {
+
+				// WebKit
+
+				if ( event.wheelDeltaY ) {
+
+					camera.fov -= event.wheelDeltaY * 0.05;
+
+				// Opera / Explorer 9
+
+				} else if ( event.wheelDelta ) {
+
+					camera.fov -= event.wheelDelta * 0.05;
+
+				// Firefox
+
+				} else if ( event.detail ) {
+
+					camera.fov += event.detail * 1.0;
+
+				}
+				if (camera.fov > 129)
+					camera.fov=129;
+				if (camera.fov < 27)
+					camera.fov=27;
+				//console.log(camera.fov);
+				camera.updateProjectionMatrix();
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				update();
+
+			}
+
+			function update() {
+
+				var crrTime = (new Date()).getTime();
+				var dur=crrTime-lastTime;
+				lastTime=crrTime;
+				
+				if (!activePath) {
+					if ( isUserInteracting === false && !lock) {
+						if (isPos)
+							lon += 0.1; // * dur / 15;
+						else
+							lon -= 0.1;
+					}
+				} else {
+					dur = crrTime-activePath.start;
+					var coef;
+					var ee=false;
+					if (dur >= activePath.dur) {
+						coef=1;
+						ee=true;
+					} else {
+						coef=dur*1.0/activePath.dur;
+					}
+					lon = activePath.startLon+coef*(activePath.endLon-activePath.startLon);
+					lat = activePath.startLat+coef*(activePath.endLat-activePath.startLat);
+					if (ee)
+						activePath=null;
+				}
+				lon=lon%360;
+				lat=lat%360;
+				//console.log("LON="+lon+" LAT="+lat);
+				lat = Math.max( - 85, Math.min( 85, lat ) );
+				phi = THREE.Math.degToRad( 90 - lat );
+				theta = THREE.Math.degToRad( lon );
+
+				camera.target.x = 500 * Math.sin( phi ) * Math.cos( theta );
+				camera.target.y = 500 * Math.cos( phi );
+				camera.target.z = 500 * Math.sin( phi ) * Math.sin( theta );
+
+				camera.lookAt( camera.target );
+
+				/*
+				// distortion
+				camera.position.copy( camera.target ).negate();
+				*/
+
+				renderer.render( scene, camera );
+			}
+		</script>
+	</body>
+</html>
