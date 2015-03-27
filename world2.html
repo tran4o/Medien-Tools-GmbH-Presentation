@@ -236,6 +236,7 @@
 				podest.needsUpdate = true;				
 				//-..................................................................
 				var mats = ["index-blue.jpg","index-green.jpg","index-yellow.jpg","index-red.jpg","index-purple.jpg",];
+				var rngs = ["index-ring-blue.jpg","index-ring-green.jpg","index-ring-yellow.jpg","index-ring-red.jpg","index-ring-purple.jpg",];
 				//-..................................................................
 				var dm1 = new THREE.Object3D();
 				scene.remove(sp1);
@@ -272,9 +273,13 @@
 					dummies[i]=dummy;
 
 					var cnt = i == 1 ? 3 : 1;
+					var rngm = ring.material.clone();
+					rngm.map = THREE.ImageUtils.loadTexture("data/"+rngs[i]);
+					rngm.needsUpdate = true;
 					for (var k = 0; k<cnt; k++) 
 					{
-						var rng = new THREE.Mesh( ring.geometry, ring.material );
+						var rng = new THREE.Mesh( ring.geometry, rngm );
+						rng.castShadow = true;
 						dummies[i].add(rng);
 						rings[rings.length]=rng;
 					}
